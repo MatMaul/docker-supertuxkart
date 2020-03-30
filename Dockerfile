@@ -22,6 +22,6 @@ RUN mkdir build && cd build && cmake ../stk-code -DSERVER_ONLY=ON && make -j4 &&
 
 FROM base
 
-COPY --from=builder /usr/local /user/local
+COPY --from=builder /usr/local /usr/local
 
 ENTRYPOINT /usr/local/bin/supertuxkart
