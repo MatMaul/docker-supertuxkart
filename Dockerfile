@@ -24,4 +24,4 @@ FROM base
 
 COPY --from=builder /usr/local /usr/local
 
-ENTRYPOINT /usr/local/bin/supertuxkart
+ENTRYPOINT ["/usr/local/bin/supertuxkart"]
