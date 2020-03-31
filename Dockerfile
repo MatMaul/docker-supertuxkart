@@ -1,13 +1,10 @@
-FROM centos:7 AS base
+FROM ubuntu:19.10 AS base
 
-ARG TARGETPLATFORM
-RUN if [ "$TARGETPLATFORM" = "linux/arm/v7" ]; then echo "armhfp" > /etc/yum/vars/basearch && echo "armv7hl" > /etc/yum/vars/arch && echo "armv7hl-redhat-linux-gpu" > /etc/rpm/platform; fi
-
-RUN yum update -y && yum install -y zlib libcurl openssl sqlite && yum clean all
+RUN apt update && apt dist-upgrade -y && apt install -y zlib1g libssl1.1 sqlite3 curl && apt clean
 
 FROM base AS builder
 
-RUN yum install -y gcc-c++ cmake make openssl-devel libcurl-devel zlib-devel sqlite-devel git svn
+RUN apt install -y gcc g++ cmake make libcurl4-openssl-dev libssl-dev zlib1g-dev libsqlite3-dev git subversion pkg-config
 
 RUN curl -O http://enet.bespin.org/download/enet-1.3.14.tar.gz
 RUN tar xf enet-1.3.14.tar.gz
