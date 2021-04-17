@@ -1,24 +1,45 @@
-FROM ubuntu:19.10 AS base
+FROM ubuntu:20.04 AS base
+LABEL maintainer=matmaul
 
-RUN apt update && apt dist-upgrade -y && apt install -y zlib1g libssl1.1 sqlite3 curl && apt clean
+ENV ENET_VERSION=1.3.17
+ENV STK_VERSION=1.1
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update && \
+    apt install --no-install-recommends -y build-essential \
+        zlib1g-dev \
+        libssl-dev \
+        sqlite3 \
+        curl && \
+    apt clean
 
 FROM base AS builder
 
 RUN apt install -y gcc g++ cmake make libcurl4-openssl-dev libssl-dev zlib1g-dev libsqlite3-dev git subversion pkg-config
 
-RUN curl -O http://enet.bespin.org/download/enet-1.3.14.tar.gz
-RUN tar xf enet-1.3.14.tar.gz
-RUN cd enet-1.3.14 && ./configure && make -j4 && make install
+RUN curl -O http://enet.bespin.org/download/enet-${ENET_VERSION}.tar.gz
+RUN tar xf enet-${ENET_VERSION}.tar.gz
+RUN cd enet-${ENET_VERSION} && \
+    ./configure && \
+    make -j$(nproc) && \
+    make install
 
-RUN git clone -b 1.1 --depth 1 https://github.com/supertuxkart/stk-code.git
-RUN svn co https://svn.code.sf.net/p/supertuxkart/code/stk-assets stk-assets
-#COPY stk-code stk-code
-#COPY stk-assets stk-assets
+RUN git clone -b ${STK_VERSION} --depth 1 https://github.com/supertuxkart/stk-code.git
 
-RUN mkdir build && cd build && cmake ../stk-code -DSERVER_ONLY=ON && make -j4 && make install
+# Builds should be reproducible. Therefore using the versioned assets
+#RUN svn co https://svn.code.sf.net/p/supertuxkart/code/stk-assets stk-assets
+RUN svn checkout https://svn.code.sf.net/p/supertuxkart/code/stk-assets-release/${VERSION}/ stk-assets
+
+RUN mkdir build && \
+    cd build && \
+    cmake ../stk-code -DSERVER_ONLY=ON && \
+    make -j$(nproc) && \
+    make install
 
 FROM base
 
 COPY --from=builder /usr/local /usr/local
 
+EXPOSE 2757
+EXPOSE 2759
 ENTRYPOINT ["/usr/local/bin/supertuxkart"]
